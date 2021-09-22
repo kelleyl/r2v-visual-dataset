@@ -4,6 +4,9 @@ import pickle
 import traceback
 import tensorflow as tf
 import tensorflow_hub as hub
+from pathlib import Path
+from datetime import datetime
+import json
 from utils import *
 
 import os ##todo 6/29/21 kelleylynch this fix shouldnt be necessary
@@ -113,11 +116,31 @@ def main(args=None):
                 embeds, id_dict = generate_video_embeddings(video_batch)
                 save_to_faiss_index(embeds, f"{args.prefix}.faiss", id_dict, f"{args.prefix}.mapping")
 
+    def str_to_bool(value):
+        if value.lower() in {'false', 'f', '0', 'no', 'n'}:
+            return False
+        elif value.lower() in {'true', 't', '1', 'yes', 'y'}:
+            return True
+        raise ValueError(f'{value} is not a valid boolean value')
+    
+
+
     def query(args):
         index, id_dict = load_index_files(args.prefix)
         search_obj = IndexSearch(index, id_dict)
         result_list = search_obj.query_index(args.query_string, args.output)
         print(result_list)
+        if args.save_frames:
+            path_prefix = "/home/kmlynch/projects/r2v-visual-data-tools"
+            results_directory = datetime.now().strftime('%H%M%S')
+            for ix, (vid_path, timestamp) in enumerate(result_list):
+                Path(f"outputs/{results_directory}").mkdir(parents=True, exist_ok=True)
+                get_video_start(video_path=f"{path_prefix}/{vid_path}",
+                                start=timestamp,
+                                output_directory=f"outputs/{results_directory}/{ix}",
+                                save_frames=True)
+            with open(f"outputs/{results_directory}/params.json", "w") as f:
+                json.dump({"query": args.query_string, "prefix": args.prefix}, f)
 
     import argparse
     parser = argparse.ArgumentParser()
@@ -133,6 +156,7 @@ def main(args=None):
     query_parser.add_argument("query_string", type=str)
     query_parser.add_argument("-output", default=None, help="directory to store the output, if not supplied, video paths will be printed to stdout")
     query_parser.add_argument("-count", help="number of videos to return", type=int, choices=range(1, 5))
+    query_parser.add_argument("-save_frames", help="whether to save frames to outputs/", type=str_to_bool, default=False)
     query_parser.set_defaults(func=query)
 
     args = parser.parse_args(args)
@@ -141,5 +165,3 @@ def main(args=None):
 
 if __name__ == '__main__':
     main()
-
-

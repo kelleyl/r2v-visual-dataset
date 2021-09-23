@@ -4,7 +4,7 @@ import numpy as np
 import torch as th
 
 
-def get_video_start(video_path, start, output_directory=None):
+def get_video_start(video_path, start, output_directory=None, save_vid=False, save_frames=False):
     """This function was adapted from  https://github.com/antoine77340/MIL-NCE_HowTo100M
     """
     num_frames = 32
@@ -26,13 +26,16 @@ def get_video_start(video_path, start, output_directory=None):
             base_name = os.path.basename(video_path)[:15]
             if not os.path.exists(f'{output_directory}'):
                 os.mkdir(f'{output_directory}')
-            output_filename = f'{output_directory}/{base_name}_{start}.mp4'
-            if os.path.exists(output_filename):
-                os.remove(output_filename)
-            if not os.path.exists(output_filename):
-                out2, _ = (
-                    cmd.output(output_filename).run(capture_stdout=True, quiet=True)
-                )
+            if save_vid: # Save 32 frames as .mp4
+                output_filename = f'{output_directory}/{base_name}_{start}.mp4'
+                if os.path.exists(output_filename):
+                    os.remove(output_filename)
+                if not os.path.exists(output_filename):
+                    out2, _ = (
+                        cmd.output(output_filename).run(capture_stdout=True, quiet=True)
+                    )
+            elif save_frames: # Convert to 1 fps and save frames as .jpg
+                cmd.filter('fps', fps='1').output(f"{output_directory}/frame%d.jpg", start_number=0).run(quiet=True)
         out, _ = (
             cmd.output('pipe:', format='rawvideo', pix_fmt='rgb24').run(capture_stdout=True, quiet=True)
         )
@@ -48,3 +51,4 @@ def get_video_start(video_path, start, output_directory=None):
         zeros = th.zeros((3, num_frames - video.shape[1], size, size), dtype=th.uint8)
         video = th.cat((video, zeros), axis=1)
     return video[:, :num_frames]
+

@@ -122,7 +122,6 @@ def main(args=None):
         elif value.lower() in {'true', 't', '1', 'yes', 'y'}:
             return True
         raise ValueError(f'{value} is not a valid boolean value')
-    
 
 
     def query(args):

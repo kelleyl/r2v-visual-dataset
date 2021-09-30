@@ -58,21 +58,22 @@ def youtube_query_and_download():
     recipes = load_recipes()
     for recipe in tqdm.tqdm(recipes):
         video_query = f"{recipe['name']} recipe"
-        video_list = get_video_id_list(video_query)
         _, _, query_history = load_query_log()
         if video_query in query_history:
             print(f"skipping {video_query}")
-        print(
-            f"downloading {len(set(video_list) - set(current_recipe_id_list))} new videos..."
-        )
-        for video in video_list:
-            log_json = {
-                "video_id": video,
-                "recipe_id": recipe["id"],
-                "query_text": video_query,
-            }
-            log_query(log_json)
-        download_videos_by_id(video_list)
+        else:
+            video_list = get_video_id_list(video_query)
+            print(
+                f"downloading {len(set(video_list) - set(current_recipe_id_list))} new videos..."
+            )
+            for video in video_list:
+                log_json = {
+                    "video_id": video,
+                    "recipe_id": recipe["id"],
+                    "query_text": video_query,
+                }
+                log_query(log_json)
+            download_videos_by_id(video_list)
 
 
 if __name__ == "__main__":

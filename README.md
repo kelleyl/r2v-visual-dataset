@@ -1,5 +1,11 @@
 # Scripts
-```build_video_index.py```
+```yt_download.py```
+This module contains the functions to load recipes from json and query youtube for recipes with
+the given recipe title. The downloader requires that an api key be included in a `config.py` file.
+The `config.py` file should contain a line like the following `api_key="XXXXXX"` (with the user's api key inserted). The
+api key can be generated from the google developer console.
+
+```video_index.py```
 This module provides a cli for building and querying a faiss index of video clip embeddings.
 The cli takes one of 2 possible commands, `build` or `query`.
 For either command, the first parameter `-prefix` specifies the path to the faiss index file and the mapping file which  contains a dictionary of indices from the faiss file and `(filename, second_offset)`tuples.

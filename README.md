@@ -15,4 +15,10 @@ the command would be:
 
 *see argparse for additional parameters*
 
+## Getting Image Frames from a Query 
+The scripts ```submit_query.py``` and ```retrieve_output.sh``` can be run in tandem on Tarski and locally in order to quickly test the retrieval results on a specific data source. 
+
+In ```submit_query```, an example query is formatted using the set variables. Run this on Tarski, and an ```outputs/``` directory will be created containing the frame results. 
+
+Then, modify the variables in ```retrieve_output.sh``` with your Tarski username and the directory where ```submit_query.py``` was run on Tarski. Running ```./retrieve_output.sh``` locally will then call scp to download the contents of the Tarski ```outputs/``` directory to a local location.
 ``````

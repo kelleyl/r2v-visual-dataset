@@ -48,3 +48,74 @@ def get_video_start(video_path, start, output_directory=None):
         zeros = th.zeros((3, num_frames - video.shape[1], size, size), dtype=th.uint8)
         video = th.cat((video, zeros), axis=1)
     return video[:, :num_frames]
+
+
+def load_recipes_sentences_conllu(conllu_path: str) -> dict:
+    with open(conllu_path, "r") as in_file:
+        lines = in_file.readlines()
+    lines = list(
+        filter(lambda x: x.startswith("# sent_id") or x.startswith("# text"), lines)
+    )
+    id_text_dict = {}
+    for i in range(0, len(lines), 2):
+        sent_id = lines[i].split("=")[1].strip().replace("::", "_")
+        sent_text = lines[i + 1].split("=")[1].strip()
+        if "step" in sent_id:
+            id_text_dict[sent_id] = sent_text
+    return id_text_dict
+
+
+def load_recipes_conllu(conllu_path: str) -> dict:
+    id_query_dict = {}
+    with open(conllu_path, "r") as in_file:
+        lines = in_file.readlines()
+    # split lines into recipes
+    size = len(lines)
+    idx_list = [idx for idx, val in enumerate(lines) if "newdoc" in val]
+    res = [
+        lines[i:j]
+        for i, j in zip(
+            idx_list, idx_list[1:] + ([size] if idx_list[-1] != size else [])
+        )
+    ]
+    for recipe in res:
+        reader = [line.split("\t") for line in recipe]
+        event_indices = [idx for idx, val in enumerate(reader) if "B-EVENT" in val]
+        text_between_events = [
+            itertools.islice(reader, i, j)
+            for i, j in zip(
+                event_indices,
+                event_indices[1:]
+                + ([len(recipe)] if event_indices[-1] != len(recipe) else []),
+                )
+        ]
+        for _id, tbe in enumerate(text_between_events):
+            event_text = " ".join(
+                (conll_line[1] for conll_line in tbe if len(conll_line) > 2)
+            )
+            event_id = f"{reader[0][0].split('=')[1].strip()}_{_id}"
+            id_query_dict[event_id] = event_text
+    return id_query_dict
+
+
+def conllu_to_videos(conllu_path: str, video_output_dir: str) -> None:
+    """
+    This function takes a path to a conllu recipe file and an output path to store the video results.
+    """
+    from video_index import main as main
+
+    id_text_dict = load_recipes_conllu(conllu_path)
+    for k, v in id_text_dict.items():
+        print(f"id:{k}, text:{v}")
+        if not os.path.exists(f"data/{video_output_dir}"):
+            os.mkdir(f"data/{video_output_dir}")
+        main(
+            [
+                "-prefix",
+                "data/indices/youtube_all",  # todo un-hardcode this
+                "query",
+                v,
+                "-output",
+                f"data/{video_output_dir}/{k}",
+            ]
+        )

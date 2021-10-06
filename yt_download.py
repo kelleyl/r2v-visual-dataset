@@ -8,7 +8,7 @@ import tqdm
 LOG_FILE = "queries.log"
 RECIPES_FILE = "recipes.json"
 DOWNLOAD_DIRECTORY = os.path.join("data", "youtube")
-
+# DOWNLOAD_DIRECTORY = config.download_directory
 api = Api(api_key=config.api_key)
 
 
@@ -73,6 +73,13 @@ def youtube_query_and_download():
                     "query_text": video_query,
                 }
                 log_query(log_json)
+            if len(video_list) == 0:   # placeholder
+                log_json = {"video_id":  None,
+                            "recipe_id": recipe["id"],
+                            "query_text": video_query
+                            }
+                log_query(log_json)
+
             download_videos_by_id(video_list)
 
 
